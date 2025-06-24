@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Copy } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -68,6 +68,9 @@ export function WeatherForm() {
     message: string;
     id?: string;
   } | null>(null);
+
+  const [copied, setCopied] = useState(false);
+  const copyTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const handleDateChange = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -149,6 +152,13 @@ export function WeatherForm() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCopy = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopied(true);
+    if (copyTimeout.current) clearTimeout(copyTimeout.current);
+    copyTimeout.current = setTimeout(() => setCopied(false), 1500);
   };
 
   return (
@@ -249,11 +259,19 @@ export function WeatherForm() {
             >
               <p className="text-sm font-medium">{result.message}</p>
               {result.success && result.id && (
-                <p className="text-xs mt-1">
-                  Your weather request ID:{" "}
-                  <code className="bg-green-500/20 text-green-400 px-1 rounded">
-                    {result.id}
-                  </code>
+                <p className="text-xs mt-1 flex items-center gap-2">
+                  Your weather request ID: 
+                  <code className="bg-green-500/20 text-green-400 px-1 rounded">{result.id}</code>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(result.id)}
+                    className="p-1 rounded hover:bg-green-700/30 transition"
+                    title={copied ? "Copied!" : "Copy to clipboard"}
+                    aria-label="Copy ID to clipboard"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  {copied && <span className="text-green-300 ml-1">Copied!</span>}
                 </p>
               )}
             </div>
